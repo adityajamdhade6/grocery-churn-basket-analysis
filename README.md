@@ -1,0 +1,52 @@
+# Who is about to stop ordering, and what keeps people coming back?
+
+> **Data note.** This uses the public Instacart (US grocery) dataset as a proxy for quick-commerce order behaviour, framed around the
+> retention and basket questions any quick-commerce grocer asks. Basket composition and reorder-timing patterns are structurally similar
+> to quick-commerce, but absolute order frequency differs: 10-minute delivery changes shopping habits compared with weekly grocery runs,
+> so the day-count thresholds below would need re-tuning on real quick-commerce data. This is a stated limitation, not a hidden one.
+
+**Central question:** *Which customers are at risk of never ordering again, and which products keep people coming back?*
+
+## Findings memo
+
+**Business question:** Where should a grocery app spend its retention effort, on which customers and on which products?
+
+**What I found** (206,209 customers, 3.4M orders):
+- **A month of silence is the clearest warning sign.** 63,186 customers (31%) just went 30+ days between orders. Rewinding to each customer's
+  6th order, regular shoppers who went quiet that long **faded 32% of the time vs 11%** for those who kept their rhythm: about 3x.
+- **Fresh everyday foods bring people back.** **Dairy & eggs (67%) and produce (65%)** are re-bought about two-thirds of the time,
+  versus **pantry (35%)** and personal care (32%). New customers whose first basket included Organic Strawberries became loyal
+  (20+ orders) **38% of the time vs 26%** overall.
+- **Baskets do not grow, they harden into a routine.** Basket size stays near **10 items** from the 1st order to the 30th, but the
+  share that is repeat items climbs from **27% on the 2nd order to 81% by the 30th**.
+
+**Recommendation:** Trigger a win-back nudge when a regular shopper passes about 1.5x their own usual gap, before the month-long silence, and
+run it against a holdout group to measure the lift. For new customers, feature and always keep in stock the fresh staples (strawberries, milk, bananas) in the first-order experience.
+
+## What is in the project
+
+| Layer | File | What it is |
+|---|---|---|
+| SQL (DuckDB) | [sql/01_churn_risk.sql](sql/01_churn_risk.sql), [02_retention_products.sql](sql/02_retention_products.sql), [03_basket.sql](sql/03_basket.sql) | LAG, running AVG/COUNT/SUM, RANK windows. Each query has a plain-English "question / why it matters" block above it |
+| Excel | [excel/Instacart_Basket_Analysis.xlsx](excel/Instacart_Basket_Analysis.xlsx) | Summary tab first (3 findings, 2 charts), then basket (2 native PivotTables), department, product-pair and churn tabs, plus a `Pivot_Check` cross-check tab |
+| Dashboard | [dashboard/dashboard.html](dashboard/dashboard.html) | 4 KPIs and 4 visuals for a 30-second skim. Step-by-step Tableau Public / Power BI rebuild in [dashboard/BUILD_GUIDE.md](dashboard/BUILD_GUIDE.md), data in `dashboard/data/` |
+| Results | `results/*.csv` | Every query output, so each number above can be traced |
+
+
+## How to run this
+
+**Raw data not included.** Download the [Instacart Market Basket Analysis dataset from Kaggle](https://www.kaggle.com/c/instacart-market-basket-analysis/data) (about 200 MB zipped) and unzip the six CSVs into a `raw/` folder at the project root. Everything else is in this repo.
+
+```bash
+pip install -r requirements.txt
+bash scripts/run_all.sh      # loads DuckDB, runs the SQL, rebuilds the Excel workbook and dashboard.html (about 1 minute)
+```
+
+Or just open the finished files: `dashboard/dashboard.html` in a browser, `excel/Instacart_Basket_Analysis.xlsx` in Excel. Every query output is in `results/` so each number above can be traced without re-running anything.
+
+## How "at risk" is defined, and how far to trust it
+
+- **High risk** = latest gap between orders was 30+ days (the data caps gaps at 30). **Watch** = regular shopper (usual gap under 12 days) now at 1.5x+ their own normal; 16% of these faded vs 11% healthy. It is not applied to occasional shoppers because the back-test showed no signal there.
+- The data has **no calendar dates**, so "silent" is judged from the gap before a customer's latest order, and "order volume over time" is measured from each customer's own first order.
+- Every customer has **4+ orders**, so "ordered once and vanished" cannot be observed. "Faded" means 2 or fewer further orders after the 6th. Occasional shoppers naturally place fewer orders, so back-test groups are compared like for like.
+- First-basket and department results show **association, not cause**. The two basket tables on `Pivot_Basket` are native PivotTables built on a 50,000-order sample (`Orders_Data`); `Pivot_Check` recomputes them with formulas and shows the differences (all 0). The PivotTable parts were written directly into the file and could not be opened in Excel in the build environment, so if Excel offers a repair on first open, use `excel/Instacart_Basket_Analysis_no_pivot_objects.xlsx` (same content, tables as plain values). A `.pbix` cannot be generated by script, so the Power BI/Tableau version is a build guide.

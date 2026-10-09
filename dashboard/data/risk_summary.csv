@@ -1,0 +1,4 @@
+risk_tier,customers,pct_of_customers,avg_typical_gap,avg_latest_gap,tier_sort
+High risk,63186,30.6,19.0,30.0,1
+Watch,15555,7.5,7.7,17.6,2
+Healthy,127468,61.8,14.2,10.6,3

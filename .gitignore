@@ -1,0 +1,15 @@
+# Raw Instacart CSVs (~700 MB) and the generated DuckDB database (~300 MB): not stored in git
+/raw/
+/data/
+*.duckdb
+*.zip
+
+# Python / environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# macOS / Excel temp files
+.DS_Store
+~$*.xlsx

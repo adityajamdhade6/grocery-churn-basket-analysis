@@ -1,0 +1,6 @@
+cadence,tier_at_order_6,customers,pct_who_faded,avg_orders_placed_afterwards
+Occasional shopper (gap 12d+),Healthy,66738,27.5,8.9
+Occasional shopper (gap 12d+),High risk,26713,53.0,4.0
+Regular shopper (gap < 12d),Healthy,49830,10.7,24.8
+Regular shopper (gap < 12d),Watch,14853,16.3,18.5
+Regular shopper (gap < 12d),High risk,4499,32.0,9.0
